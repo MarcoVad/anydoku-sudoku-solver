@@ -1,0 +1,96 @@
+{
+"name": "Elektor 2012",
+"link": "https://www.elektormagazine.com/magazine/elektor-201207/19950",
+"comment": "This one may use the specific subclass Sudoku.HexadokuCBoard (when type=HexadokuC)\nThe main class Sudodu.SudokuBoard (type=Sudoku or omitted) also supports it if you specify rowSize, colSize and oddeven fields\n",
+"grid": [
+	"        ................",
+	"        ................",
+	"  E     ..67AB....EFC...",
+	"   L    D.3......C...E.A",
+	"    E   ..018...4.....67",
+	"     K  ..F....0.8165..2",
+	"    T   ..CD61.F..058..3",
+	"   O    .......C.......0",
+	"  R     .5.....7..490DCB.........B...F..",
+	"        .0.....4B..A32.E.2..F..C......7.",
+	"  2     .9.......F....A1..C7....4......3",
+	"   0    .6........3C78.....A......5C1...",
+	"    1   .DA54...............4.....0.C...",
+	"     2  .......................E5.F83...",
+	"        ....05A1..................2.49..",
+	"        ....7.........5...B.......D..8..",
+	"...3......0.A76.........................",
+	"96..........3.....5..8........92........",
+	"...FA7...5..E149..0.C...832..F..C.....E9",
+	".....6............3C.....A...4..F.......",
+	"6..741............C.6....7...3..8..1.D.F",
+	"...4......129E....D..2...6....F0..32.A..",
+	".5.18DE...A..B...........D..............",
+	".E......D.3..A...............6..........",
+	".....F....6..9..................",
+	".....2..3.B854....7.....D.......",
+	"..A5...........D.3A.............",
+	"......1..E........1.............",
+	"..................0.............",
+	"B4...............E34...8BC......",
+	"2........D..0............3...5..",
+	"..5...3..0....9..A..B..E10....9.",
+	"                A......7.......1",
+	"   .---_---.    .....2.A9E7.....",
+	"  -| o     |-   ....4F........6.",
+	"  -|       |-   ....5.......7...",
+	"  -|       |-   .F........43C7A5",
+	"  -|       |-   ............38DE",
+	"   '-------'    6.........2.4B0F",
+	"                ............9216"
+],
+
+"boards": [
+	{
+	"name": "hexadoku1",
+	"type": "Sudoku",
+	"gridRow": 0,
+	"gridCol": 8,
+	"rowSize": 16,
+	"colSize": 16,
+	"oddeven": {"checker_even": true}
+	},
+	{
+	"name": "hexadoku2",
+	"type": "Sudoku",
+	"gridRow": 16,
+	"gridCol": 0,
+	"rowSize": 16,
+	"colSize": 16,
+	"oddeven": {"checker_even": true}
+	},
+	{
+	"name": "hexadoku3",
+	"type": "Sudoku",
+	"gridRow": 12,
+	"gridCol": 12,
+	"rowSize": 16,
+	"colSize": 16,
+	"oddeven": {"checker_even": true}
+	},
+	{
+	"type": "Sudoku",
+	"gridRow": 8,
+	"gridCol": 24,
+	"rowSize": 16,
+	"colSize": 16,
+	"oddeven": {"checker_even": true}
+	},
+	{
+	"name": "hexadoku5",
+	"type": "Sudoku",
+	"gridRow": 24,
+	"gridCol": 16,
+	"rowSize": 16,
+	"colSize": 16,
+	"oddeven": {"checker_even": true}
+	}
+] 
+
+
+}

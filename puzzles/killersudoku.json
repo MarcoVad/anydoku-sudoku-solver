@@ -1,0 +1,54 @@
+{
+"name": "Divisor killer calcudoku",
+"link": "https://akashdoulani.blogspot.com/2019/10/puzzle-no-022019-divisor-killer-sudoku.html",
+"comment": "* Calcufields must be dividable by the given number, we will use a post-rule to define a modulo operation\n* digits are not repeatable",
+"grid": [
+	"5.......9",
+	".6..2..1.",
+	"..2...5..",
+	"...7.....",
+	".1.....5.",
+	".....5...",
+	"..5...7..",
+	".7..8..6.",
+	"6.......1"
+	],
+
+"boards": [ 
+	{
+	"type": "Calcudoku",
+	"calcufields":{
+		"repeat_digits": false,
+		"post_rules": ["0%"],
+		"fields": [
+	      ".....111.",
+	      "..22.33..",
+	      "4.......5",
+	      "446.7..55",
+	      "4.67778.9",
+	      "AA..7.899",
+	      "A.......9",
+	      "..BB.CC..",
+	      ".DDD....."
+	      ],
+		"rules": {
+		  "1": "9+",
+		  "2": "6+",
+		  "3": "7+",
+		  "4": "8+",
+		  "5": "5+",
+		  "6": "5+",
+		  "7": "2+",
+		  "8": "9+",
+		  "9": "9+",
+		  "A": "7+",
+		  "B": "3+",
+		  "C": "4+",
+		  "D": "7+"
+		}
+	}
+	}
+] 
+
+
+}

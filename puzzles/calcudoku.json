@@ -1,0 +1,35 @@
+{
+"name": "Hard calcudoku",
+"grid": [
+	"....",
+	"....",
+	"....",
+	"...."
+	],
+
+"boards": [ 
+	{
+	"type": "Calcudoku",
+	"rowSize": 4,
+	"colSize": 4,
+	"nofields": true,
+	"calcufields":{
+		"fields": [
+	      "1122",
+	      "3332",
+	      "4355",
+	      "4455"
+	      ],
+		"rules": {
+		  "1": "5+",
+		  "2": "7+",
+		  "3": "11+",
+		  "4": "8+",
+		  "5": "9+"
+		}
+	}
+	}
+] 
+
+
+}

@@ -1,0 +1,39 @@
+{
+"name": "6*6 sudoku with odd/even fields",
+"link": "6by6_oddeven.png",
+"grid": [
+	"1.4...",
+	"....1.",
+	"...2..",
+	"..3...",
+	".4....",
+	"...5.2"
+	],
+
+"boards": [ 
+	{
+	"rowSize": 6,
+	"colSize": 6,
+	"fields": [
+		"000111",
+		"000111",
+		"222333",
+		"222333",
+		"444555",
+		"444555"
+		],
+	"oddeven": {
+			"fields": [
+			"OOEEEO",
+			"OEEOOE",
+			"EOOEEO",
+			"EEOEOO",
+			"EEOOOE",
+			"OOEOEE"
+			]	    
+		}
+	}
+] 
+
+
+}
