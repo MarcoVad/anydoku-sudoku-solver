@@ -156,12 +156,14 @@ def deduction_loop():
                 cand = doku.get_candidates()
                 if verbose > 1: doku.print_candidates(info='candidates after get_candidates()')
                 
-                merged = merge_overlaps(i)
                 cmap_prune = deepcopy(doku.cmap)
+                merged = merge_overlaps(i)
+                if verbose > 1 and merged > 0:
+                    doku.print_candidates(info='candidates after merge_overlaps()')
                 
                 pruned = doku.prune_candidates(markcolor=markcolor, cmap=cmap_prune, verbose=verbose>1)
                 if verbose > 1 and pruned > 0:
-                    doku.print_candidates(cmap_prune, info='candidates after prune_candidates()')
+                    doku.print_candidates(cmap=cmap_prune, info='candidates after prune_candidates()')
                 
                 solved = doku.find_solutions(markcolor=markcolor, verbose=verbose>1)
                 
@@ -206,8 +208,9 @@ def guessing_loop():
         print ('Guessing iteration', loop)
         for board in boards:
             doku=board['doku']
-            print ("deepdive into", doku.name)
-            upd = upd+doku.deepdive(verbose=verbose)            
+            if not doku.solved():
+                print ("deepdive into", doku.name)
+                upd = upd+doku.deepdive(verbose=verbose)            
             
         if upd == 0:
             break

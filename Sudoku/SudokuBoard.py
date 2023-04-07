@@ -383,6 +383,7 @@ class SudokuBoard(object):
         CS = self.colsize
         if cmap is None:
             cmap = self.cmap
+        print ('  ' + self.name)
        
         ln = 0
         i = 0
@@ -793,14 +794,21 @@ class SudokuBoard(object):
           Solutions that survive the merge can then be fixed as solved.
         '''
         if verbose is None: verbose = VERBOSE
-        iteration = 0
         solved = 0
+
+        if self.solved():
+            return solved
+        
+        iteration = 0
         self.walk = None
         
-        while 1:
+        while 1: # walk the walks
             updates = 0
+            index_list = self.get_path() 
+            if len(index_list) > 0 and all(len(self.cand[i]) == 1 for i in index_list):
+                # noting to solve for this walk
+                continue
             iteration += 1
-            index_list = self.get_path()    
             
             for i in index_list:
                 b_copy = None
