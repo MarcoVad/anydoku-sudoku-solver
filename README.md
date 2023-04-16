@@ -97,7 +97,7 @@ Sudoku boards are represented in a text console
 Screen shots
 ------------
 
-[20x20 Calcudoku](images/screenshot1.png)
+[20x20 Calcudoku aka. Largest Calcudoku](images/screenshot1.png)
 <p><img src="images/screenshot1.png"></p>
 
 [6x6 odd/even Sudoku](images/screenshot2.png)
