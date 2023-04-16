@@ -1,5 +1,6 @@
 # anydoku-sudoku-solver
 Versatile solver for any sudoku type, single/multi board, any size, jigsaw, multifield, oddeven, diagonal, calcudoku, killer etc.
+With nice examples of the famous Elektor penta-hexadoku of 2012 and the so called 'largest calcudoku'.
 
 What is anydoku?
 ----------------
@@ -15,8 +16,10 @@ $ python3 anydoku.py <arguments>
 
 [anydoku.py](anydoku.py) is a wrapper around the classes that do the real work:
 
-* [BoardReader](Sudoku/BoardReader.py): reader for anydoku JSON files. 
-    You have to write a JSON input file to define a puzzle you want to get solved. 
+* [BoardReader](Sudoku/BoardReader.py): 
+   reader for anydoku JSON files. 
+   
+   You have to write a JSON input file to define a puzzle you want to get solved. 
     To get started, please check the example files (notably the [regular.json](puzzles/regular.json) ) 
 
 ````
@@ -43,8 +46,10 @@ $ python3 anydoku.py <arguments>
 }
 ````
 
-* [SudokuBoard](Sudoku/SudokuBoard.py): Base class, tool box with operations and helper functions in the scope of a single Sudoku board. 
-    The data tables and operation break-down are designed to be as general and flexible as possible.
+* [SudokuBoard](Sudoku/SudokuBoard.py): 
+   Base class, tool box with operations and helper functions in the scope of a single Sudoku board. 
+   
+   The data tables and operation break-down are designed to be as general and flexible as possible.
     For example, a 'field' is implemented as a group of cells that contain all numbers ('digits') once.
     This can then be handled equally for the square fields in a regular Sudoku, extra fields, diagonal fields, jigsaw fields etc.
     Calcudoku puzzles are supported by [CalcudokuBoard](Sudoku/CalcudokuBoard.py) which is a sub-class of SudokuBoard. This sub-classing is an example
@@ -57,11 +62,15 @@ Further functions in [anydoku.py](anydoku.py):
 * command line parser
     Run 'python3 anydoku.py -h' for help on the command line arguments
 
-* merge_overlaps(): Used to merge the results of puzzles with multiple overlapping boards
+* merge_overlaps(): 
+    Used to merge the results of puzzles with multiple overlapping boards
+    
     Since the SudokuBoard and sub-classes operate on single boards the merging is done here. This also means that boards of 
     different types can be successfully merged. 
     
-* deduction_loop(): iterative deduction solver
+* deduction_loop(): 
+    iterative deduction solver
+    
     The solver loops over these operations for each board in the puzzle:
     1. get candidates:    determine which digits can be placed in each cell
     2. merge_overlaps:    does nothing unless there are overlapping boards 
