@@ -75,7 +75,8 @@ class SudokuBoard(object):
             board['fields'],
             self.nofields, 
             board.get('efields'),
-            board.get('oddeven'))
+            board.get('oddeven'),
+            board.get('gt'))
        
         self.init_calc(board.get('calc')) 
         self.init_edges()
@@ -104,7 +105,7 @@ class SudokuBoard(object):
             result = digitset[0]
         return result
         
-    def init_data(self, fields, nofields, efields, oddeven):
+    def init_data(self, fields, nofields, efields, oddeven, gt):
         """
         initialize internal data structures
         """
@@ -154,7 +155,7 @@ class SudokuBoard(object):
         self.digitsets = {}
         self.oddeven = ['.'] * self.size if oddeven is None else oddeven
         
-        # For odd/even fields and calcudokus we need the integer representation of the (string) digits
+        # For odd/even fields, greaterthan and calcudokus we need the integer representation of the (string) digits
         if 'A' in self.digits:
             self.numdigits = sorted([int(d, 16) for d in self.digits]) 
         else:
@@ -197,6 +198,8 @@ class SudokuBoard(object):
             for field in fields:
                 fld_list.extend([j for j in self.f_ind[field]])
             self.cellvis.append(set(row_list+col_list+fld_list))
+            
+        self.edges = gt
 
     def init_calc(self, calc):
         """
@@ -211,6 +214,33 @@ class SudokuBoard(object):
         """
         RS = self.rowsize
         CS = self.colsize
+  
+        def edge_op_h(i):
+            """
+            find edge operator for horizontal edge above cell i
+            """
+            result = ''
+            if self.edges:
+                for op, ii in self.edges[i]:
+                    if ii == i-RS:
+                        if op == '<': op = 'v'
+                        if op == '>': op = '^'
+                        result = op
+            return result
+       
+        def edge_op_v(i):
+            """
+            find edge operator for vertical edge to the left of cell i
+            """
+            result = ''
+            if self.edges:
+                for op, ii in self.edges[i]:
+                    if ii == i-1:
+                        if op == '<': op = '>'
+                        elif op == '>': op = '<'
+                        result = op
+            return result
+       
         
         # construct self.frame for print_puzzle()
         self.frame = []
@@ -227,11 +257,14 @@ class SudokuBoard(object):
                 else:     
                     f =self.fields[i]
                     # field color logic
-                    fu = self.fields[i-CS] # field 1 up
-                    fur = self.fields[i-CS+1] if c<(CS-1) else [0] # field 1 up, right
-                    fr = self.fields[i+1] if c<(CS-1) else [0] # field 1 right
+                    fu = self.fields[i-RS] # field 1 up
+                    fur = self.fields[i-RS+1] if c<(RS-1) else [0] # field 1 up, right
+                    fr = self.fields[i+1] if c<(RS-1) else [0] # field 1 right
                     
                     h = '---' if f[0] != fu[0] else '   '
+                    op = edge_op_h(i)
+                    if op != '': 
+                        h = h[0] + op + h[2]
                     n, col = '', ''
                     if any(_f in fu for _f in f[1:]):
                         if lastf!=f[1]: lastf, n, col = f[1], normal, efieldcolors[f[1]%2]
@@ -252,6 +285,9 @@ class SudokuBoard(object):
                     f =self.fields[i]
                     f2 = self.fields[i-1]
                     v = '|' if f[0] != f2[0] else ' '
+                    op = edge_op_v(i)
+                    if op != '':
+                        v = op
                     if len(f)>1 and len(f2)>1 and f[1] == f2[1]:
                         v = efieldcolors[f[1]%2] + v + normal
                 vline += v + '%s'
@@ -507,14 +543,13 @@ class SudokuBoard(object):
 
         if s is None:
             s = range(self.size)
-        
+            
         cand_cnt = 0
         for i in s:
             if self.puz[i] == '.':
                
                 possible_digits =  self.find_digits(i)
                 digits = list(possible_digits) if init else list(possible_digits & set(self.cand[i]))
-                
                 if len(digits) == 0:
                     raise ValueError('No candidates found for %s' %self.cell_info(i))
                 
@@ -523,10 +558,137 @@ class SudokuBoard(object):
                     cand_cnt += len(self.cand[i])
             else:
                 self.cand[i] = [self.puz[i]]
+                
         return cand_cnt
+   
     
+    def handle_edges(self, s=None, markcolor=6, cmap=None, verbose=None):
 
-    def prune_candidates(self, markcolor=2, cmap=None, verbose=None):
+        def set_lowest_cand(i, min_candlst):
+            edges = self.edges[i]
+           
+            if self.puz[i] == '.':  
+                cells = [ii for op, ii in edges if op=='>']
+                for ii in cells:
+                    set_lowest_cand(ii, min_candlst)
+               
+                self.get_candidates(s=[i])  
+                digit = self.cand[i][0] 
+                self.puz[i] = digit
+                self.cand[i] = [digit]
+                min_candlst.append(digit)
+            else:
+                min_candlst.append(self.puz[i])
+                
+
+        def set_highest_cand(i, max_candlst):
+            edges = self.edges[i]
+            
+            if self.puz[i] == '.':  
+                cells = [ii for op, ii in edges if op=='<']
+                for ii in cells:
+                    set_highest_cand(ii, max_candlst)
+                
+                self.get_candidates(s=[i])  
+                digit = self.cand[i][-1] 
+                self.puz[i] = digit
+                self.cand[i] = [digit]
+                max_candlst.append(digit)
+            else:
+                max_candlst.append(self.puz[i])
+                
+        
+        def min_cand(i):
+            # The minimum value must be greater than the lowest of all linked '>' cells 
+            edges = self.edges[i]
+            cells = [ii for op, ii in edges if op=='>']
+            if cells == []:
+                return lowest
+           
+            # We are going to place digits on the board recursively, thereby taking into account the cells
+            # that can 'see' each other or not. First take a copy of the current board and restore it afterwards.  
+            cand_copy = deepcopy(self.cand)
+            puz_copy = deepcopy(self.puz)
+           
+            min_candlst = [] 
+            no_placements = 0
+            for ii in cells:
+                try:
+                    set_lowest_cand(ii, min_candlst)
+                except ValueError:
+                    no_placements += 1
+            
+            self.get_candidates(s=[i])  
+            numcands = sorted([self.digits.index(d)+lowest for d in min_candlst])
+            
+            self.cand = cand_copy
+            self.puz = puz_copy
+            
+            return max(numcands)+1+no_placements
+
+        def max_cand(i):
+            # The minimum value must be greater than the lowest of all linked '>' cells 
+            edges = self.edges[i]
+            cells = [ii for op, ii in edges if op=='<']
+            if cells == []:
+                return highest
+            
+            # We are going to place digits on the board recursively, thereby taking into account the cells
+            # that can 'see' each other or not. First take a copy of the current board and restore it afterwards.  
+            cand_copy = deepcopy(self.cand)
+            puz_copy = deepcopy(self.puz)
+
+            max_candlst = []
+            no_placements = 0
+            for ii in cells:
+                try:
+                    set_highest_cand(ii, max_candlst)
+                except ValueError:
+                    no_placements += 1
+            
+            self.get_candidates(s=[i])  
+            numcands = sorted([self.digits.index(d)+lowest for d in max_candlst])
+
+            self.cand = cand_copy
+            self.puz = puz_copy
+
+            return min(numcands)-1-no_placements
+        
+        #--------------------------------#
+        updates = 0
+
+        if self.edges is None:
+            return updates 
+
+        if s is None: s = range(self.size)
+        if cmap is None: cmap = self.cmap
+        
+        lowest = int(self.digits[0])
+        highest = lowest + self.rowsize - 1
+        for i in s:
+            if self.puz[i] == '.' and len(self.cand[i])>1:
+                edges = self.edges[i]
+                if len(edges):
+                    try:
+                        min_value = min_cand(i)
+                        max_value = max_cand(i)
+                    except ValueError:
+                        raise ValueError('Value does not fit edge constraints for %s' %(self.cell_info(i)))
+                        
+                    cands = [self.digits.index(d)+lowest for d in self.cand[i]] # TODO: define function to convert list of digits into numdigits
+                    
+                    
+                    digits = [self.digits[c-lowest] for c in cands if c not in range(min_value, max_value+1)]
+                    if len(digits):
+                        self.eliminate_digits(i, digits, cmap, markcolor)
+                        updates += len(digits)
+                    # TODO: verbose 
+
+        return updates   
+
+
+
+    def prune_candidates(self, markcolor=6, cmap=None, verbose=None):
         """
         - find digits that are needed for a field and appear on the same row/col
           then, remove the digit from row/col in other fields 
@@ -557,7 +719,7 @@ class SudokuBoard(object):
                     for i in self.r_ind[row]:
                         r, c, flds = self.cellind[i]
                         if field not in flds and digit in self.cand[i]:
-                            self.eliminate_digits(i, [digit], cmap)
+                            self.eliminate_digits(i, [digit], cmap, markcolor)
                             updates += 1
                             if verbose > 0: print("* remove %s from row %d, outside field %d: %s @ %s" %
                                   (digit, r+1, field+1, digit, self.cell_info(i)) )
@@ -566,7 +728,7 @@ class SudokuBoard(object):
                     for i in self.c_ind[col]:
                         r, c, flds = self.cellind[i]
                         if field not in flds and digit in self.cand[i]:
-                            self.eliminate_digits(i, [digit], cmap)
+                            self.eliminate_digits(i, [digit], cmap, markcolor)
                             updates += 1
                             if verbose > 0: print("* remove %s from col %d, outside field %d: %s @ %s" %
                                   (digit, c+1, field+1, digit, self.cell_info(i)) )
@@ -592,7 +754,7 @@ class SudokuBoard(object):
                         for i in self.f_ind[field]:
                             r, c, _ = self.cellind[i]
                             if row != r and digit in self.cand[i]:
-                                self.eliminate_digits(i, [digit], cmap)
+                                self.eliminate_digits(i, [digit], cmap, markcolor)
                                 updates += 1
                                 if verbose > 0: print("* remove %s from field %d, not in row %d: %s @ %s" %
                                       (digit, field+1, row+1, digit, self.cell_info(i)) )
@@ -616,7 +778,7 @@ class SudokuBoard(object):
                         for i in self.f_ind[field]:
                             r, c, _ = self.cellind[i]
                             if col != c and digit in self.cand[i]:
-                                self.eliminate_digits(i, [digit], cmap)
+                                self.eliminate_digits(i, [digit], cmap, markcolor)
                                 updates += 1
                                 if verbose > 0: print("* remove %s from field %d, not in col %d: %s @ %s" %
                                       (digit, field+1, col+1, digit, self.cell_info(i)) )
@@ -700,10 +862,16 @@ class SudokuBoard(object):
         while 1:
             upd = 0
             cand = self.get_candidates()
-            if verbose>2: self.print_candidates(info='candidates after get_candidates()')
-            
+            if verbose>2: 
+                print(); self.print_candidates(info='candidates after get_candidates()')
+                
+            removed = self.handle_edges(verbose=verbose>1)
+            if verbose > 2 and removed > 0:
+                print(); self.print_candidates(info='candidates after handle_edges()')
+                
             pruned = self.prune_candidates(verbose=verbose)
-            if verbose>2 and pruned>0: self.print_candidates(info='candidates after prune_candidates()')
+            if verbose>2 and pruned>0: 
+                print(); self.print_candidates(info='candidates after prune_candidates()')
             
             solved = self.find_solutions(markcolor=markcolor, cmap=cmap, verbose=verbose)
 
@@ -839,8 +1007,8 @@ class SudokuBoard(object):
                         b_copy.solver(markcolor=4, verbose=verbose-2)
                     except ValueError as e:
                         if verbose in (1,2): b_copy.print_puzzle(info=info)
+                        if verbose > 2:      b_copy.print_candidates(info=info)      
                         if verbose > 1:      print ("%s cannot be in %s: %s" %(digit, b_copy.cell_info(i), str(e)))
-
                         try:
                             n_old, n_new = self.eliminate_digits(i, [digit], self.cmap)
                             if verbose > 1: 

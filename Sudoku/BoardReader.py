@@ -68,6 +68,7 @@ def read_from_string(data, conf):
     print()
     
     for m, board in enumerate(data['boards']):
+        # ------------- basic board setup --------- #
         brd = {}
         default_type = 'Sudoku'
         name = board.get('name', 'board%d'%(m+1))
@@ -75,13 +76,16 @@ def read_from_string(data, conf):
             name = data['name'] + '.' + name
         brd['name'] = name
         
-        row, col = board.get('gridRow', 0), board.get('gridCol',0)
         boardObj, RS_def, CS_def = typemap[board.get('type', default_type)]
         RS = board.get('rowSize', RS_def)
         CS = board.get('colSize', CS_def)
         brd['fields'] = None 
         brd['nofields'] = board.get('nofields', False)
         
+        if 'fields' in board and not brd['nofields']:
+            brd['fields'] = get_fields(board['fields'])
+
+        # ------------- odd/even  ---------------- #
         for key, flddata in board.get('oddeven', {}).items():
             if key == 'fields':
                 brd['oddeven'] = get_fields(flddata)
@@ -99,8 +103,7 @@ def read_from_string(data, conf):
                 raise BoardReaderError('key oddeven.%s not supported' %(key))
            
             
-        if 'fields' in board and not brd['nofields']:
-            brd['fields'] = get_fields(board['fields'])
+        # ---------- extra fields / diagonal  ---------------- #
         
         for key, flddata in board.get('extrafields', {}).items():
             brd['efields'] = []
@@ -129,6 +132,36 @@ def read_from_string(data, conf):
             else:
                 raise BoardReaderError("Hey, where are the extra fields??")
 
+        # ------------ edge constraints ----------------- #
+        for key, edgedata in board.get('edges', {}).items():
+            if 'greater' in key:
+                gt = [[] for i in range(RS*CS)]
+                r = 0
+                dots = [c for c,x in enumerate(edgedata[0]) if x=='.']
+                for line in edgedata:
+                    if '.' in line:
+                        for col, op in enumerate(line.split('.')[1:-1]):
+                            if op == ' ' : continue
+                            i = r*CS + col
+                            i2 = i+1
+                            gt[i].append((op, i2))
+                            gt[i2].append(('<' if op == '>' else '>', i)) # apply inverse operation
+                    else:
+                        for col, p in enumerate(dots):
+                            op = line[p]
+                            i = r*CS + col
+                            i2 = (r+1)*CS + col
+                            if op == 'v':
+                                gt[i].append(('>', i2))
+                                gt[i2].append(('<', i))
+                            elif op == '^':
+                                gt[i].append(('<', i2))
+                                gt[i2].append(('>', i))
+                        r += 1
+                brd['gt'] = gt           
+                        
+
+        # ----------------- calcudoku ------------------- #
         brd['calc'] = None
         if 'calcufields' in board:
             calcufields = board['calcufields']
@@ -154,6 +187,8 @@ def read_from_string(data, conf):
                 
             brd['calc'] = calc
          
+        # ---------------- puzzle grid ------------------ # 
+        row, col = board.get('gridRow', 0), board.get('gridCol',0)
         if len(data.get('grid', [])):
             if ',' in data['grid'][0]:
                 grid = [line.replace(' ','').split(',') for line in data['grid']]
@@ -163,13 +198,14 @@ def read_from_string(data, conf):
         else: 
             brd['puzzle'] = ['.' for i in range(RS*CS)]
             
+        # ------------- create a board instance ---------- #
         brd['rowsize'] = RS
         brd['colsize'] = CS
         brd['doku'] = boardObj(brd, conf)
         brd['doku'].print_puzzle()
         brd['overlap'] = []
     
-        #overlaps
+        # -------------- overlaps ------------------------ #
         for n, board2 in enumerate(data['boards']):
             if n == m: continue
             row2, col2 = board2['gridRow'], board2['gridCol']

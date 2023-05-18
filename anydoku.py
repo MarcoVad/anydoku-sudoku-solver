@@ -142,7 +142,7 @@ def deduction_loop():
     Try to solve all puzzles with solver deduction, no guessing
     """    
     loop = 0
-    markcolor = 4 # to mark only the latest changes
+    markcolor = 6 # to mark the pruned candidates
     while 1:
         loop = loop+1
         if verbose > 0 :print ('Deduction iteration', loop)
@@ -154,18 +154,23 @@ def deduction_loop():
             if not doku.solved():
                 
                 cand = doku.get_candidates()
-                if verbose > 1: doku.print_candidates(info='candidates after get_candidates()')
+                if verbose > 1: 
+                    print(); doku.print_candidates(info='candidates after get_candidates()')
                 
-                cmap_prune = deepcopy(doku.cmap)
+                cmap_temp = deepcopy(doku.cmap)
+                removed = doku.handle_edges(markcolor=markcolor, cmap=cmap_temp, verbose=verbose>1)
+                if verbose > 1 and removed > 0:
+                    print(); doku.print_candidates(cmap=cmap_temp, info='candidates after handle_edges()')
                 merged = merge_overlaps(i)
                 if verbose > 1 and merged > 0:
-                    doku.print_candidates(info='candidates after merge_overlaps()')
+                    print(); doku.print_candidates(info='candidates after merge_overlaps()')
                 
+                cmap_prune = deepcopy(doku.cmap)
                 pruned = doku.prune_candidates(markcolor=markcolor, cmap=cmap_prune, verbose=verbose>1)
                 if verbose > 1 and pruned > 0:
-                    doku.print_candidates(cmap=cmap_prune, info='candidates after prune_candidates()')
+                    print(); doku.print_candidates(cmap=cmap_prune, info='candidates after prune_candidates()')
                 
-                solved = doku.find_solutions(markcolor=markcolor, verbose=verbose>1)
+                solved = doku.find_solutions(markcolor=4, verbose=verbose>1)
                 
                 if verbose > 0: 
                     print()
@@ -174,9 +179,10 @@ def deduction_loop():
                     doku.print_puzzle()
                     print()
             
-                doku.cmap_replace(doku.cmap, markcolor, 2)
-                doku.cmap_replace(doku.cmap, 6, 0)
-                upd = upd + solved
+                doku.cmap_replace(doku.cmap, markcolor, 0)
+                doku.cmap_replace(doku.cmap, 4, 2)
+                #upd = upd + solved
+                upd = upd + solved + pruned
         
         if len(boards) > 1:       
             print ("overall solved", upd)
