@@ -701,6 +701,7 @@ class SudokuBoard(object):
        
         if verbose > 0: print ('\nprune candidates', self.name)
         updates = 0
+        
         # investigate fields
         for field, fieldset in enumerate(self.f_ind):
             digit_r, digit_c = {}, {}
@@ -733,57 +734,94 @@ class SudokuBoard(object):
                             if verbose > 0: print("* remove %s from col %d, outside field %d: %s @ %s" %
                                   (digit, c+1, field+1, digit, self.cell_info(i)) )
 
+                # find digit groups 
+                candlist = [tuple(self.cand[ii]) for ii in fieldset]
+                groups = {el for el in candlist if candlist.count(el) == len(el) and len(el)>1 }
+                for group in groups:
+                    for i in fieldset:
+                        if set(self.cand[i]) != set(group):
+                            digits = list(set(self.cand[i])&set(group))
+                            if len(digits) > 0:
+                                self.eliminate_digits(i, digits, cmap, markcolor)
+                                updates += 1
+                                if verbose > 0: print("* remove %s from field %d, not in group (%s): %s @ %s" %
+                                      (','.join(digits), field+1, ','.join(group), ','.join(digits), self.cell_info(i)) )
 
         # investigate rows
-        if len(self.f_ind) > 0:
-            for row, rowset in enumerate(self.r_ind):
-                #print ('Check row', row)
-                digit_f = {}
-                for digit in self.digits:
-                    digit_f[digit] = []
-                    
-                    for i in rowset:
-                        _, _, flds = self.cellind[i]
-                        if digit in self.cand[i]:
-                            digit_f[digit].extend(flds)
-                    
-                for digit in digit_f:
-                    fields = list(set(digit_f[digit]))
-                    if len(fields)==1 and len(digit_f[digit])>1:
-                        field = fields[0]
-                        for i in self.f_ind[field]:
-                            r, c, _ = self.cellind[i]
-                            if row != r and digit in self.cand[i]:
-                                self.eliminate_digits(i, [digit], cmap, markcolor)
-                                updates += 1
-                                if verbose > 0: print("* remove %s from field %d, not in row %d: %s @ %s" %
-                                      (digit, field+1, row+1, digit, self.cell_info(i)) )
-                                        
-            # investigate columns
-            for col, colset in enumerate(self.c_ind):
-                #print ('Check col', col)
-                digit_f = {}
-                for digit in self.digits:
-                    digit_f[digit] = []
-                    
-                    for i in colset:
-                        _, _, flds = self.cellind[i]
-                        if digit in self.cand[i]:
-                            digit_f[digit].extend(flds)
-                    
-                for digit in digit_f:
-                    fields = list(set(digit_f[digit]))
-                    if len(fields)==1 and len(digit_f[digit])>1:
-                        field = fields[0]
-                        for i in self.f_ind[field]:
-                            r, c, _ = self.cellind[i]
-                            if col != c and digit in self.cand[i]:
-                                self.eliminate_digits(i, [digit], cmap, markcolor)
-                                updates += 1
-                                if verbose > 0: print("* remove %s from field %d, not in col %d: %s @ %s" %
-                                      (digit, field+1, col+1, digit, self.cell_info(i)) )
+        for row, rowset in enumerate(self.r_ind):
+            #print ('Check row', row)
+            digit_f = {}
+            for digit in self.digits:
+                digit_f[digit] = []
+                
+                for i in rowset:
+                    _, _, flds = self.cellind[i]
+                    if digit in self.cand[i]:
+                        digit_f[digit].extend(flds)
+                
+            for digit in digit_f:
+                fields = list(set(digit_f[digit]))
+                if len(fields)==1 and len(digit_f[digit])>1:
+                    field = fields[0]
+                    for i in self.f_ind[field]:
+                        r, c, _ = self.cellind[i]
+                        if row != r and digit in self.cand[i]:
+                            self.eliminate_digits(i, [digit], cmap, markcolor)
+                            updates += 1
+                            if verbose > 0: print("* remove %s from field %d, not in row %d: %s @ %s" %
+                                  (digit, field+1, row+1, digit, self.cell_info(i)) )
 
-        
+            # find digit groups 
+            candlist = [tuple(self.cand[ii]) for ii in rowset]
+            groups = {el for el in candlist if candlist.count(el) == len(el) and len(el)>1 }
+            for group in groups:
+                for i in rowset:
+                    if set(self.cand[i]) != set(group):
+                        digits = list(set(self.cand[i])&set(group))
+                        if len(digits) > 0:
+                            self.eliminate_digits(i, digits, cmap, markcolor)
+                            updates += 1
+                            if verbose > 0: print("* remove %s from row %d, not in group (%s): %s @ %s" %
+                                  (','.join(digits), row+1, ','.join(group), ','.join(digits), self.cell_info(i)) )
+                                    
+        # investigate columns
+        for col, colset in enumerate(self.c_ind):
+            #print ('Check col', col)
+            digit_f = {}
+            for digit in self.digits:
+                digit_f[digit] = []
+                
+                for i in colset:
+                    _, _, flds = self.cellind[i]
+                    if digit in self.cand[i]:
+                        digit_f[digit].extend(flds)
+            
+            for digit in digit_f:
+                fields = list(set(digit_f[digit]))
+                if len(fields)==1 and len(digit_f[digit])>1:
+                    field = fields[0]
+                    for i in self.f_ind[field]:
+                        r, c, _ = self.cellind[i]
+                        if col != c and digit in self.cand[i]:
+                            self.eliminate_digits(i, [digit], cmap, markcolor)
+                            updates += 1
+                            if verbose > 0: print("* remove %s from field %d, not in col %d: %s @ %s" %
+                                  (digit, field+1, col+1, digit, self.cell_info(i)) )
+                            
+            # find digit groups 
+            candlist = [tuple(self.cand[ii]) for ii in colset]
+            groups = {el for el in candlist if candlist.count(el) == len(el) and len(el)>1 }
+            for group in groups:
+                for i in colset:
+                    if set(self.cand[i]) != set(group):
+                        digits = list(set(self.cand[i])&set(group))
+                        if len(digits) > 0:
+                            self.eliminate_digits(i, digits, cmap, markcolor)
+                            updates += 1
+                            if verbose > 0: print("* remove %s from column %d, not in group (%s): %s @ %s" %
+                                  (','.join(digits), col+1, ','.join(group), ','.join(digits), self.cell_info(i)) )
+                
+    
 
         return updates 
 
