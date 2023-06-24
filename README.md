@@ -73,9 +73,10 @@ Further functions in [anydoku.py](anydoku.py):
     
     The solver loops over these operations for each board in the puzzle:
     1. get candidates:    determine which digits can be placed in each cell
-    2. merge_overlaps:    does nothing unless there are overlapping boards 
-    3. prune candidates:  tries to eliminate digits per cell
-    4. find solutions:    detects where cells can be fixed 
+    2. handle edges:      handle edge constraints such as 'greater/smaller than' clues, if any 
+    3. merge_overlaps:    does nothing unless there are overlapping boards 
+    4. prune candidates:  tries to eliminate digits per cell
+    5. find solutions:    detects where cells can be fixed 
     
 * guessing_loop(): wraps the deduction loop and starts guessing if needed
 
